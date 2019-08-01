@@ -47,10 +47,10 @@ my class InternalDeviceInfo is repr('CStruct') {
     has Str $.path;
     has uint16 $.vendor-id;
     has uint16 $.product-id;
-    has Str $.serial-number;
+    has CArray[uint32] $.serial-number;
     has uint16 $.release-number;
-    has Str $.manufacturer-string;
-    has Str $.product-string;
+    has CArray[uint32] $.manufacturer-string;
+    has CArray[uint32] $.product-string;
     has uint16 $.usage-page;
     has uint16 $.usage;
     has uint32 $.interface-number;
@@ -70,16 +70,37 @@ class DeviceInfo {
     has UInt $.interface-number;
 
     only method new(InternalDeviceInfo $dev-info) {
-        dd $dev-info.usage-page;
+        my $dev-info-usage-page = $dev-info.usage-page;
+        if $dev-info-usage-page < 0 {
+            $dev-info-usage-page = +^$dev-info-usage-page;
+        }
+
+        my sub convert-wide-string($array) {
+            my $length = 0;
+            my @chrs = gather loop {
+                die "something went wrong decoding HID API string"
+                    if $length >= 1024;
+
+                last if $array.AT-POS($length) == 0;
+                take $array.AT-POS($length++);
+            }
+
+            chrs(@chrs);
+        }
+
+        my $dev-info-serial-number       = convert-wide-string($dev-info.serial-number);
+        my $dev-info-manufacturer-string = convert-wide-string($dev-info.manufacturer-string);
+        my $dev-info-product-string      = convert-wide-string($dev-info.product-string);
+
         self.bless(
             path                => $dev-info.path,
             vendor-id           => $dev-info.vendor-id,
             product-id          => $dev-info.product-id,
-            serial-number       => $dev-info.serial-number,
+            serial-number       => $dev-info-serial-number,
             release-number      => $dev-info.release-number,
-            manufacturer-string => $dev-info.manufacturer-string,
-            product-string      => $dev-info.product-string,
-            usage-page          => $dev-info.usage-page,
+            manufacturer-string => $dev-info-manufacturer-string,
+            product-string      => $dev-info-product-string,
+            usage-page          => $dev-info-usage-page,
             usage               => $dev-info.usage,
             interface-number    => $dev-info.interface-number,
         );
@@ -163,7 +184,6 @@ method enumerate(::?CLASS: UInt $vendor-id, UInt $product-id --> Seq) {
 
         my $orig-ptr = $dev-info-ptr;
         while $dev-info-ptr {
-            dd $dev-info-ptr;
             my $dev-info = nativecast(InternalDeviceInfo, $dev-info-ptr);
             take DeviceInfo.new($dev-info);
 
