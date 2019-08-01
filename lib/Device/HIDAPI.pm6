@@ -70,6 +70,14 @@ class DeviceInfo {
     has UInt $.interface-number;
 
     only method new(InternalDeviceInfo $dev-info) {
+        # So... For reasons (it's a bug) uint16 apparently can be read as an int
+        # instead of a uint. In those cases a value like 65280 will appear
+        # instead as -256. This uses 2's compliment to undo that when that
+        # happens. This is definitely a rakudobug. I've been told it's known,
+        # but I don't have a bug number for it. Someday, though...
+        #
+        # TODO Remove this work-around to uint16 and negative values bug.
+        # (preferably after rakudo fixes the bug)
         my $dev-info-usage-page = $dev-info.usage-page;
         if $dev-info-usage-page < 0 {
             $dev-info-usage-page = +^$dev-info-usage-page;
