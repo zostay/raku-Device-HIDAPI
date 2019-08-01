@@ -188,7 +188,7 @@ sub hid_enumerate(uint16 $vendor-id, uint16 $product-id --> Pointer[InternalDevi
 #		void  HID_API_EXPORT HID_API_CALL hid_free_enumeration(struct hid_device_info *devs);
 sub hid_free_enumeration(Pointer[InternalDeviceInfo] $devs) is native('hidapi') { * }
 
-method enumerate(::?CLASS: UInt $vendor-id, UInt $product-id --> Seq) {
+method enumerate(::?CLASS: UInt $vendor-id = 0, UInt $product-id = 0 --> Seq) {
     gather {
         my $dev-info-ptr = hid_enumerate($vendor-id, $product-id);
 
