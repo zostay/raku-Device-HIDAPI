@@ -45,16 +45,51 @@ unit class Device::HIDAPI is repr('CPointer');
 #		};
 my class InternalDeviceInfo is repr('CStruct') {
     has Str $.path;
-    has uint16 $.vendor-id;
-    has uint16 $.product-id;
-    has CArray[uint32] $.serial-number;
-    has uint16 $.release-number;
-    has CArray[uint32] $.manufacturer-string;
-    has CArray[uint32] $.product-string;
-    has uint16 $.usage-page;
-    has uint16 $.usage;
-    has uint32 $.interface-number;
+    has uint16 $!vendor-id;
+    has uint16 $!product-id;
+    has CArray[uint32] $!serial-number;
+    has uint16 $!release-number;
+    has CArray[uint32] $!manufacturer-string;
+    has CArray[uint32] $!product-string;
+    has uint16 $!usage-page;
+    has uint16 $!usage;
+    has uint32 $!interface-number;
     has Pointer $.next;
+
+    # So... For reasons (it's a bug) uint16 apparently can be read as an int
+    # instead of a uint. In those cases a value like 65280 will appear
+    # instead as -256. This uses 2's compliment to undo that when that
+    # happens. This is definitely a rakudobug. I've been told it's known,
+    # but I don't have a bug number for it. Someday, though...
+    #
+    # TODO Remove this work-around to uint16 and negative values bug.
+    # (preferably after rakudo fixes the bug)
+    my sub convert-uint-to-uint($v) {
+        $v < 0 ?? +^$v !! $v
+    }
+
+    my sub convert-wide-string($array) {
+        my $length = 0;
+        my @chrs = gather loop {
+            die "something went wrong decoding HID API string"
+                if $length >= 1024;
+
+            last if $array.AT-POS($length) == 0;
+            take $array.AT-POS($length++);
+        }
+
+        chrs(@chrs);
+    }
+
+    method vendor-id(--> uint16) { convert-uint-to-uint($!vendor-id) }
+    method product-id(--> uint16) { convert-uint-to-uint($!product-id) }
+    method serial-number(--> Str) { convert-wide-string($!serial-number) }
+    method release-number(--> uint16) { convert-uint-to-uint($!release-number) }
+    method manufacturer-string(--> Str) { convert-wide-string($!manufacturer-string) }
+    method product-string(--> Str) { convert-wide-string($!product-string) }
+    method usage-page(--> uint16) { convert-uint-to-uint($!usage-page) }
+    method usage(--> uint16) { convert-uint-to-uint($!usage) }
+    method interface-number(--> uint32) { convert-uint-to-uint($!interface-number) }
 }
 
 class DeviceInfo {
@@ -70,45 +105,15 @@ class DeviceInfo {
     has UInt $.interface-number;
 
     only method new(InternalDeviceInfo $dev-info) {
-        # So... For reasons (it's a bug) uint16 apparently can be read as an int
-        # instead of a uint. In those cases a value like 65280 will appear
-        # instead as -256. This uses 2's compliment to undo that when that
-        # happens. This is definitely a rakudobug. I've been told it's known,
-        # but I don't have a bug number for it. Someday, though...
-        #
-        # TODO Remove this work-around to uint16 and negative values bug.
-        # (preferably after rakudo fixes the bug)
-        my $dev-info-usage-page = $dev-info.usage-page;
-        if $dev-info-usage-page < 0 {
-            $dev-info-usage-page = +^$dev-info-usage-page;
-        }
-
-        my sub convert-wide-string($array) {
-            my $length = 0;
-            my @chrs = gather loop {
-                die "something went wrong decoding HID API string"
-                    if $length >= 1024;
-
-                last if $array.AT-POS($length) == 0;
-                take $array.AT-POS($length++);
-            }
-
-            chrs(@chrs);
-        }
-
-        my $dev-info-serial-number       = convert-wide-string($dev-info.serial-number);
-        my $dev-info-manufacturer-string = convert-wide-string($dev-info.manufacturer-string);
-        my $dev-info-product-string      = convert-wide-string($dev-info.product-string);
-
         self.bless(
             path                => $dev-info.path,
             vendor-id           => $dev-info.vendor-id,
             product-id          => $dev-info.product-id,
-            serial-number       => $dev-info-serial-number,
+            serial-number       => $dev-info.serial-number,
             release-number      => $dev-info.release-number,
-            manufacturer-string => $dev-info-manufacturer-string,
-            product-string      => $dev-info-product-string,
-            usage-page          => $dev-info-usage-page,
+            manufacturer-string => $dev-info.manufacturer-string,
+            product-string      => $dev-info.product-string,
+            usage-page          => $dev-info.usage-page,
             usage               => $dev-info.usage,
             interface-number    => $dev-info.interface-number,
         );
@@ -235,7 +240,9 @@ method !try-error($where) {
 
 multi method new(::?CLASS:U: UInt :$vendor-id!, UInt :$product-id!, Str :$serial-number --> Device::HIDAPI) {
     my $dev = hid_open($vendor-id, $product-id, $serial-number);
-    self!try-error('hid_open');
+    without $dev {
+        self!error('hid_open');
+    }
     $dev;
 }
 
@@ -259,7 +266,9 @@ sub hid_open_path(Str $path --> Device::HIDAPI) is native('hidapi') { * }
 
 multi method new(::?CLASS:U: Str:D :$path! --> Device::HIDAPI) {
     my $dev = hid_open_path($path);
-    self!try-error('hid_open_path');
+    without $dev {
+        self!error('hid_open_path');
+    }
     $dev;
 }
 
