@@ -16,6 +16,8 @@ install:
     - cd %APPVEYOR_BUILD_FOLDER%
     - git clone https://github.com/ugexe/zef %APPVEYOR_BUILD_FOLDER%\..\zef
     - perl6 -I %APPVEYOR_BUILD_FOLDER%\..\zef %APPVEYOR_BUILD_FOLDER%\..\zef\bin\zef --deps-only install .
+    - git clone https://github.com/libusb/hidapi %APPVEYOR_BUILD_FOLDER%\..\hidapi
+    - msbuild .\windows\hidapi.sln /p:Configuration=Release /p:Platform=%arch% /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 build: off
 
