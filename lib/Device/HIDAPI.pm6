@@ -375,7 +375,8 @@ method read-timeout(::?CLASS:D: UInt $milliseconds --> blob8:D) {
 sub hid_read(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length --> int32) is native('hidapi') { * }
 
 method read(::?CLASS:D: --> blob8:D) {
-    my CArray[uint8] $buf .= allocate(BUFFER_SIZE);
+    my CArray[uint8] $buf .= new;
+    $buf[ BUFFER_SIZE - 1 ] = 0;
     my $bytes-read = hid_read(self, $buf, BUFFER_SIZE);
 
     if $bytes-read < 0 {
