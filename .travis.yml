@@ -3,7 +3,7 @@ perl6:
   - '2019.03'
   - latest
 install:
-  - apt-get install libhidapi-dev
+  - sudo apt-get install libhidapi-dev
   - rakudobrew build-zef
   - zef install --depsonly .
 script:
