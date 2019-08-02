@@ -338,10 +338,12 @@ method write(::?CLASS:D: blob8 $data, UInt $length --> UInt) {
 #		int HID_API_EXPORT HID_API_CALL hid_read_timeout(hid_device *dev, unsigned char *data, size_t length, int milliseconds);
 sub hid_read_timeout(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length, uint32 $milliseconds --> int32) is native('hidapi') { * }
 
-my constant BUFFER_SIZE = 65;
+my constant BUFFER_SIZE = 256;
 
 method read-timeout(::?CLASS:D: UInt $milliseconds --> blob8:D) {
-    my CArray[uint8] $buf .= allocate(BUFFER_SIZE);
+    my CArray[uint8] $buf .= new;
+    $buf[ BUFFER_SIZE - 1 ] = 0;
+
     my $bytes-read = hid_read_timeout(self, $buf, BUFFER_SIZE, $milliseconds);
 
     if $bytes-read < 0 {
@@ -484,7 +486,8 @@ method send-feature-report(::?CLASS:D: blob8 $data --> UInt) {
 sub hid_get_feature_report(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length --> int32) is native('hidapi') { * }
 
 method get-feature-report(::?CLASS:D: --> blob8) {
-    my CArray[uint8] $buf .= allocate(BUFFER_SIZE);
+    my CArray[uint8] $buf .= new;
+    $buf[ BUFFER_SIZE - 1] = 0;
 
     my $bytes-read = hid_get_feature_report(self, $buf, BUFFER_SIZE);
     if $bytes-read < 0 {
@@ -527,10 +530,11 @@ submethod DESTROY(::?CLASS:D:) {
 #		int HID_API_EXPORT_CALL hid_get_manufacturer_string(hid_device *dev, wchar_t *string, size_t maxlen);
 sub hid_get_manufacturer_string(Device::HIDAPI $dev, CArray[int32] $string, size_t $maxlen --> int32) is native('hidapi') { * }
 
-my constant STRING_SIZE = 255;
+my constant STRING_SIZE = 256;
 
 method get-manufacturer(::?CLASS:D: --> Str:D) {
-    my CArray[int32] $chrs .= allocate(STRING_SIZE);
+    my CArray[int32] $chrs .= new;
+    $chrs[ STRING_SIZE - 1 ] = 0;
 
     my $actual-size = hid_get_manufacturer_string(self, $chrs, STRING_SIZE);
     if $actual-size < 0 {
@@ -554,7 +558,8 @@ method get-manufacturer(::?CLASS:D: --> Str:D) {
 sub hid_get_product_string(Device::HIDAPI $dev, CArray[int32] $string, size_t $maxlen --> int32) is native('hidapi') { * }
 
 method get-product-string(::?CLASS:D: --> Str:D) {
-    my CArray[int32] $chrs .= allocate(STRING_SIZE);
+    my CArray[int32] $chrs .= new;
+    $chrs[ STRING_SIZE - 1 ] = 0;
 
     my $actual-size = hid_get_product_string(self, $chrs, STRING_SIZE);
     if $actual-size < 0 {
@@ -578,7 +583,8 @@ method get-product-string(::?CLASS:D: --> Str:D) {
 sub hid_get_serial_number_string(Device::HIDAPI $dev, CArray[int32] $string, size_t $maxlen --> int32) is native('hidapi') { * }
 
 method get-serial-number-string(::?CLASS:D: --> Str:D) {
-    my CArray[int32] $chrs .= allocate(STRING_SIZE);
+    my CArray[int32] $chrs .= new;
+    $chrs[ STRING_SIZE - 1 ] = 0;
 
     my $actual-size = hid_get_serial_number_string(self, $chrs, STRING_SIZE);
     if $actual-size < 0 {
@@ -603,7 +609,8 @@ method get-serial-number-string(::?CLASS:D: --> Str:D) {
 sub hid_get_indexed_string(Device::HIDAPI $dev, int32 $string-index, CArray[int32] $string, size_t $maxlen --> int32) is native('hidapi') { * }
 
 method get-indexed-string(::CLASS:D: Int:D $string-index --> Str:D) {
-    my CArray[int32] $chrs .= allocate(STRING_SIZE);
+    my CArray[int32] $chrs .= new;
+    $chrs[ STRING_SIZE - 1 ] = 0;
 
     my $actual-size = hid_get_indexed_string(self, $string-index, $chrs, STRING_SIZE);
     if $actual-size < 0 {
