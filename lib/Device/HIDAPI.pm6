@@ -303,7 +303,7 @@ multi method new(::?CLASS:U: Str:D :$path! --> Device::HIDAPI) {
 #		int  HID_API_EXPORT HID_API_CALL hid_write(hid_device *dev, const unsigned char *data, size_t length);
 sub hid_write(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length --> int32) is native('hidapi') { * }
 
-method write(::?CLASS:D: blob8 $data, UInt $length --> UInt) {
+method write(::?CLASS:D: blob8 $data --> UInt) {
     my CArray[uint8] $hid-data = CArray[uint8].new($data.list);
 
     my $bytes-written = hid_write(self, $hid-data, $data.elems);
