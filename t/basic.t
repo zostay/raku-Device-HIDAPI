@@ -12,7 +12,7 @@ for Device::HIDAPI.enumerate {
 }
 
 for $got-info.keys -> ($vendor-id, $product-id) {
-    my $hid = Device::HIDAPI.new(
+    my $hid = try Device::HIDAPI.new(
         :$vendor-id,
         :$product-id,
     );
