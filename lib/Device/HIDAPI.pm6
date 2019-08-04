@@ -1,6 +1,16 @@
 use v6;
 
-use NativeCall;
+# Don't do this at home kids.
+use NativeCall :ALL;
+
+sub HIDAPI {
+    for <hidapi hidapi-hidraw hidapi-libusb> -> $lib {
+        if guess_library_name($lib) -> $hidapi {
+            return $hidapi;
+        }
+    }
+    return '';
+}
 
 unit class Device::HIDAPI is repr('CPointer');
 
@@ -135,7 +145,7 @@ class DeviceInfo {
 #				This function returns 0 on success and -1 on error.
 #		*/
 #		int HID_API_EXPORT HID_API_CALL hid_init(void);
-sub hid_init(--> int32) is native('hidapi') { * }
+sub hid_init(--> int32) is native(HIDAPI) { * }
 BEGIN hid_init() == 0 or die "unable to initialie hidapi";
 
 #		/** @brief Finalize the HIDAPI library.
@@ -150,7 +160,7 @@ BEGIN hid_init() == 0 or die "unable to initialie hidapi";
 #				This function returns 0 on success and -1 on error.
 #		*/
 #		int HID_API_EXPORT HID_API_CALL hid_exit(void);
-sub hid_exit(--> int32) is native('hidapi') { * }
+sub hid_exit(--> int32) is native(HIDAPI) { * }
 END hid_exit() == 0 or die "unable to finalize hidapi";
 
 #		/** @brief Enumerate the HID Devices.
@@ -175,7 +185,7 @@ END hid_exit() == 0 or die "unable to finalize hidapi";
 #		    	this linked list by calling hid_free_enumeration().
 #		*/
 #		struct hid_device_info HID_API_EXPORT * HID_API_CALL hid_enumerate(unsigned short vendor_id, unsigned short product_id);
-sub hid_enumerate(uint16 $vendor-id, uint16 $product-id --> Pointer[InternalDeviceInfo]) is native('hidapi') { * }
+sub hid_enumerate(uint16 $vendor-id, uint16 $product-id --> Pointer[InternalDeviceInfo]) is native(HIDAPI) { * }
 
 #		/** @brief Free an enumeration Linked List
 #
@@ -186,7 +196,7 @@ sub hid_enumerate(uint16 $vendor-id, uint16 $product-id --> Pointer[InternalDevi
 #		    	      hid_enumerate().
 #		*/
 #		void  HID_API_EXPORT HID_API_CALL hid_free_enumeration(struct hid_device_info *devs);
-sub hid_free_enumeration(Pointer[InternalDeviceInfo] $devs) is native('hidapi') { * }
+sub hid_free_enumeration(Pointer[InternalDeviceInfo] $devs) is native(HIDAPI) { * }
 
 method enumerate(::?CLASS: UInt $vendor-id = 0, UInt $product-id = 0 --> Seq) {
     gather {
@@ -226,7 +236,7 @@ method enumerate(::?CLASS: UInt $vendor-id = 0, UInt $product-id = 0 --> Seq) {
 #				success or NULL on failure.
 #		*/
 #		HID_API_EXPORT hid_device * HID_API_CALL hid_open(unsigned short vendor_id, unsigned short product_id, const wchar_t *serial_number);
-sub hid_open(uint16 $vendor-id, uint16 $product-id, Str $serial-number --> Device::HIDAPI) is native('hidapi') { * }
+sub hid_open(uint16 $vendor-id, uint16 $product-id, Str $serial-number --> Device::HIDAPI) is native(HIDAPI) { * }
 
 method !error($where) {
     my $error = hid_error(self) // 'unknown error';
@@ -262,7 +272,7 @@ multi method new(::?CLASS:U: UInt :$vendor-id!, UInt :$product-id!, Str :$serial
 #				success or NULL on failure.
 #		*/
 #		HID_API_EXPORT hid_device * HID_API_CALL hid_open_path(const char *path);
-sub hid_open_path(Str $path --> Device::HIDAPI) is native('hidapi') { * }
+sub hid_open_path(Str $path --> Device::HIDAPI) is native(HIDAPI) { * }
 
 multi method new(::?CLASS:U: Str:D :$path! --> Device::HIDAPI) {
     my $dev = hid_open_path($path);
@@ -301,7 +311,7 @@ multi method new(::?CLASS:U: Str:D :$path! --> Device::HIDAPI) {
 #				-1 on error.
 #		*/
 #		int  HID_API_EXPORT HID_API_CALL hid_write(hid_device *dev, const unsigned char *data, size_t length);
-sub hid_write(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length --> int32) is native('hidapi') { * }
+sub hid_write(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length --> int32) is native(HIDAPI) { * }
 
 method write(::?CLASS:D: blob8 $data --> UInt) {
     my CArray[uint8] $hid-data = CArray[uint8].new($data.list);
@@ -336,7 +346,7 @@ method write(::?CLASS:D: blob8 $data --> UInt) {
 #				the timeout period, this function returns 0.
 #		*/
 #		int HID_API_EXPORT HID_API_CALL hid_read_timeout(hid_device *dev, unsigned char *data, size_t length, int milliseconds);
-sub hid_read_timeout(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length, uint32 $milliseconds --> int32) is native('hidapi') { * }
+sub hid_read_timeout(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length, uint32 $milliseconds --> int32) is native(HIDAPI) { * }
 
 my constant BUFFER_SIZE = 256;
 
@@ -374,7 +384,7 @@ method read-timeout(::?CLASS:D: UInt $milliseconds --> blob8:D) {
 #				the handle is in non-blocking mode, this function returns 0.
 #		*/
 #		int  HID_API_EXPORT HID_API_CALL hid_read(hid_device *dev, unsigned char *data, size_t length);
-sub hid_read(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length --> int32) is native('hidapi') { * }
+sub hid_read(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length --> int32) is native(HIDAPI) { * }
 
 method read(::?CLASS:D: --> blob8:D) {
     my CArray[uint8] $buf .= new;
@@ -407,7 +417,7 @@ method read(::?CLASS:D: --> blob8:D) {
 #				This function returns 0 on success and -1 on error.
 #		*/
 #		int  HID_API_EXPORT HID_API_CALL hid_set_nonblocking(hid_device *dev, int nonblock);
-sub hid_set_nonblocking(Device::HIDAPI $dev, int32 $nonblock --> int32) is native('hidapi') { * }
+sub hid_set_nonblocking(Device::HIDAPI $dev, int32 $nonblock --> int32) is native(HIDAPI) { * }
 
 method set-nonblocking(::?CLASS:D: Bool:D $nonblock) {
     if hid_set_nonblocking(self, +$nonblock) < 0 {
@@ -444,7 +454,7 @@ method set-nonblocking(::?CLASS:D: Bool:D $nonblock) {
 #				-1 on error.
 #		*/
 #		int HID_API_EXPORT HID_API_CALL hid_send_feature_report(hid_device *dev, const unsigned char *data, size_t length);
-sub hid_send_feature_report(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length --> int32) is native('hidapi') { * }
+sub hid_send_feature_report(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length --> int32) is native(HIDAPI) { * }
 
 method send-feature-report(::?CLASS:D: blob8 $data --> UInt) {
     my CArray[uint8] $buf .= new($data.list);
@@ -483,7 +493,7 @@ method send-feature-report(::?CLASS:D: blob8 $data --> UInt) {
 #				byte), or -1 on error.
 #		*/
 #		int HID_API_EXPORT HID_API_CALL hid_get_feature_report(hid_device *dev, unsigned char *data, size_t length);
-sub hid_get_feature_report(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length --> int32) is native('hidapi') { * }
+sub hid_get_feature_report(Device::HIDAPI $dev, CArray[uint8] $data, size_t $length --> int32) is native(HIDAPI) { * }
 
 method get-feature-report(::?CLASS:D: --> blob8) {
     my CArray[uint8] $buf .= new;
@@ -505,7 +515,7 @@ method get-feature-report(::?CLASS:D: --> blob8) {
 #			@param dev A device handle returned from hid_open().
 #		*/
 #		void HID_API_EXPORT HID_API_CALL hid_close(hid_device *dev);
-sub hid_close(Device::HIDAPI $dev) is native('hidapi') { * }
+sub hid_close(Device::HIDAPI $dev) is native(HIDAPI) { * }
 
 method close(::?CLASS:D:) {
     hid_close(self);
@@ -528,7 +538,7 @@ submethod DESTROY(::?CLASS:D:) {
 #				This function returns 0 on success and -1 on error.
 #		*/
 #		int HID_API_EXPORT_CALL hid_get_manufacturer_string(hid_device *dev, wchar_t *string, size_t maxlen);
-sub hid_get_manufacturer_string(Device::HIDAPI $dev, CArray[int32] $string, size_t $maxlen --> int32) is native('hidapi') { * }
+sub hid_get_manufacturer_string(Device::HIDAPI $dev, CArray[int32] $string, size_t $maxlen --> int32) is native(HIDAPI) { * }
 
 my constant STRING_SIZE = 256;
 
@@ -555,7 +565,7 @@ method get-manufacturer(::?CLASS:D: --> Str:D) {
 #				This function returns 0 on success and -1 on error.
 #		*/
 #		int HID_API_EXPORT_CALL hid_get_product_string(hid_device *dev, wchar_t *string, size_t maxlen);
-sub hid_get_product_string(Device::HIDAPI $dev, CArray[int32] $string, size_t $maxlen --> int32) is native('hidapi') { * }
+sub hid_get_product_string(Device::HIDAPI $dev, CArray[int32] $string, size_t $maxlen --> int32) is native(HIDAPI) { * }
 
 method get-product-string(::?CLASS:D: --> Str:D) {
     my CArray[int32] $chrs .= new;
@@ -580,7 +590,7 @@ method get-product-string(::?CLASS:D: --> Str:D) {
 #				This function returns 0 on success and -1 on error.
 #		*/
 #		int HID_API_EXPORT_CALL hid_get_serial_number_string(hid_device *dev, wchar_t *string, size_t maxlen);
-sub hid_get_serial_number_string(Device::HIDAPI $dev, CArray[int32] $string, size_t $maxlen --> int32) is native('hidapi') { * }
+sub hid_get_serial_number_string(Device::HIDAPI $dev, CArray[int32] $string, size_t $maxlen --> int32) is native(HIDAPI) { * }
 
 method get-serial-number-string(::?CLASS:D: --> Str:D) {
     my CArray[int32] $chrs .= new;
@@ -606,7 +616,7 @@ method get-serial-number-string(::?CLASS:D: --> Str:D) {
 #				This function returns 0 on success and -1 on error.
 #		*/
 #		int HID_API_EXPORT_CALL hid_get_indexed_string(hid_device *dev, int string_index, wchar_t *string, size_t maxlen);
-sub hid_get_indexed_string(Device::HIDAPI $dev, int32 $string-index, CArray[int32] $string, size_t $maxlen --> int32) is native('hidapi') { * }
+sub hid_get_indexed_string(Device::HIDAPI $dev, int32 $string-index, CArray[int32] $string, size_t $maxlen --> int32) is native(HIDAPI) { * }
 
 method get-indexed-string(::CLASS:D: Int:D $string-index --> Str:D) {
     my CArray[int32] $chrs .= new;
@@ -640,4 +650,4 @@ method get-indexed-string(::CLASS:D: Int:D $string-index --> Str:D) {
 #				which occurred or NULL if none has occurred.
 #		*/
 #		HID_API_EXPORT const wchar_t* HID_API_CALL hid_error(hid_device *dev);
-sub hid_error(Device::HIDAPI $dev --> Str) is native('hidapi') { * }
+sub hid_error(Device::HIDAPI $dev --> Str) is native(HIDAPI) { * }
