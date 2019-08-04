@@ -15,7 +15,8 @@ use Device::HIDAPI;
 
 constant BININFO               = 0x0001;
 constant RESET-INTO-APP        = 0x0003;
-constant RESET-INTO-BOOTLOADER = 0x0004;
+constant RESET-INTO            = 0x0004;
+constant START-FLASH           = 0x0005;
 
 my Bool $DEBUG = False;
 my Int $tag = 0;
@@ -164,7 +165,7 @@ sub reset-to-app($dev) {
 }
 
 sub reset-to-bootloader($dev) {
-    Command.new(RESET-INTO-BOOTLOADER).write-to($dev);
+    Command.new(RESET-INTO).write-to($dev);
     say "\nReset to bootloader.\n";
 }
 
@@ -185,25 +186,52 @@ sub menu-prompt(--> Str) {
     }
 }
 
-sub main-loop(Device::HIDAPI $dev) {
+sub main-loop(Str $product) {
+    my $dev;
+    RELOAD: loop {
+        with $dev {
+            say "Closing HID.";
+            $dev.close;
+            $dev = Nil;
+        }
+
+        my $info = Device::HIDAPI.enumerate.first({
+            .product-string.starts-with($product)
+        });
+
+        without $info {
+            sleep 1;
+            next;
+        }
+
+        say "Opening HID [$info.path()].";
+        until $dev.defined {
+            $dev = try Device::HIDAPI.new(path => $info.path);
+            sleep 1;
+        }
+
+        while menu-loop($dev) {
+            next RELOAD;
+        }
+
+        say "Closing HID. Quitting.";
+        $dev.close;
+        last;
+    }
+}
+
+sub menu-loop(Device::HIDAPI $dev --> Bool) {
     loop {
         given menu-prompt() {
             when 'B' { bininfo($dev) }
-            when 'A' { reset-to-app($dev) }
-            when 'L' { reset-to-bootloader($dev) }
-            when 'Q' { return }
+            when 'A' { reset-to-app($dev); return True }
+            when 'L' { reset-to-bootloader($dev); return True }
+            when 'Q' { return False }
         }
     }
 }
 
-multi MAIN(Str $path, Bool :$debug = False) {
+sub MAIN(Str :$product = "CPlay Express", Bool :$debug = False) {
     $DEBUG = $debug;
-    my $hid = Device::HIDAPI.new(:$path);
-    main-loop($hid);
-}
-
-multi MAIN(Int $vendor-id, Int $product-id, Bool :$debug = False) {
-    $DEBUG = $debug;
-    my $hid = Device::HIDAPI.new(:$vendor-id, :$product-id);
-    main-loop($hid);
+    main-loop($product);
 }
