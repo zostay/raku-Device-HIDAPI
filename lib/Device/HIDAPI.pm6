@@ -5,7 +5,7 @@ use NativeCall :ALL;
 
 sub HIDAPI {
     for <hidapi hidapi-hidraw hidapi-libusb> -> $lib {
-        if guess_library_name($lib) -> $hidapi {
+        if try guess_library_name($lib) -> $hidapi {
             return $hidapi;
         }
     }
