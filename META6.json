@@ -1,6 +1,8 @@
 {
     "source-url": "git://github.com/zostay/p6-Device-HIDAPI.git",
-    "depends": [ ],
+    "depends": [
+        "LibraryCheck"
+    ],
     "test-depends": [
         "Test",
         "Test::META"

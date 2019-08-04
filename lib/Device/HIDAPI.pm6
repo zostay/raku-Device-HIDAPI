@@ -1,11 +1,12 @@
 use v6;
 
 # Don't do this at home kids.
-use NativeCall :ALL;
+use NativeCall;
+use LibraryCheck;
 
 sub HIDAPI {
     for <hidapi hidapi-hidraw hidapi-libusb> -> $lib {
-        if try guess_library_name($lib) -> $hidapi {
+        if library-check($lib) -> $hidapi {
             return $hidapi;
         }
     }
