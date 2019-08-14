@@ -2,16 +2,8 @@ use v6;
 
 # Don't do this at home kids.
 use NativeCall;
-use LibraryCheck;
 
-sub HIDAPI {
-    for <hidapi hidapi-hidraw hidapi-libusb> -> $lib {
-        if library-check($lib) -> $hidapi {
-            return $hidapi;
-        }
-    }
-    return '';
-}
+constant HIDAPI = 'hidapi';
 
 unit class Device::HIDAPI is repr('CPointer');
 
