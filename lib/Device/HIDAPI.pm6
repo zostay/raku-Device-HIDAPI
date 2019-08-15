@@ -1,11 +1,20 @@
 use v6;
 
-# Don't do this at home kids.
 use NativeCall;
 
-constant HIDAPI = 'hidapi';
-
 unit class Device::HIDAPI is repr('CPointer');
+
+my sub HIDAPI-Config(--> Str:D) {
+    try require ::('Device::HIDAPI::Config');
+    if ::('Device::HIDAPI::Config') ~~ Failure {
+        'hidapi'
+    }
+    else {
+        $::('Device::HIDAPI::Config::HIDAPI');
+    }
+}
+
+constant HIDAPI = HIDAPI-Config;
 
 #		struct hid_device_;
 #		typedef struct hid_device_ hid_device; /**< opaque hidapi structure */
