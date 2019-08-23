@@ -204,15 +204,9 @@ method enumerate(::?CLASS: UInt $vendor-id = 0, UInt $product-id = 0 --> Seq) {
     gather {
         my $dev-info-ptr = hid_enumerate($vendor-id, $product-id);
 
-        die "unable to enumerate devices for VID $vendor-id and PID $product-id"
-            unless $dev-info-ptr;
-
-        my $orig-ptr = $dev-info-ptr;
-        while $dev-info-ptr {
-            my $dev-info = nativecast(InternalDeviceInfo, $dev-info-ptr);
+        loop (my $dev-ptr = $dev-info-ptr; $dev-ptr; $dev-ptr = $dev-ptr.next) {
+            my $dev-info = nativecast(InternalDeviceInfo, $dev-ptr);
             take DeviceInfo.new($dev-info);
-
-            $dev-info-ptr = $dev-info.next;
         }
 
         hid_free_enumeration($dev-info-ptr);
