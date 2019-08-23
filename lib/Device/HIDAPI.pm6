@@ -647,3 +647,149 @@ method get-indexed-string(::CLASS:D: Int:D $string-index --> Str:D) {
 #		*/
 #		HID_API_EXPORT const wchar_t* HID_API_CALL hid_error(hid_device *dev);
 sub hid_error(Device::HIDAPI $dev --> Str) is native(HIDAPI) { * }
+
+=begin pod
+
+=head1 NAME
+
+Device::HIDAPI - low-level HID interface
+
+=head1 SYNOPSIS
+
+    use Device::HIDAPI;
+
+    # Read the raw inputs from an XBox One controller
+    sub MAIN(Str $path) {
+
+        # $path is the device path
+        my $hid = Device::HIDAPI.new($path);
+
+        loop {
+            my $data = $dev.read;
+
+            # Read the positions of the left stick
+            my $lsx = $data.read-int16(6);
+            my $lsy = $data.read-int16(8);
+
+            say "$lsx, $lsy";
+        }
+    }
+
+=head1 DESCRIPTION
+
+If you need to perform low-level interfacing with a HID (device implementing the Human Interface Device protocol), this library is for you. It depends on a C library named hidapi, which you can get from the libusb project (see INSTALLATION for details).
+
+This is a low-level library, so if you want to interface with a keyboard, mouse, joystick or other standard equipment, there's probably a better way. However, if you have a HID that implements a custom protocol or you need to get to the raw device data for some reason, this library will get you there. It provides a binary interface to read and write data to HIDs.
+
+=head1 CLASSES
+
+=head2 Device::HIDAPI
+
+This class is the primary interface for enumerating devices, All the methods defined under METHODS below belong to this class.
+
+=head2 Device::HIDAPI::Config
+
+This is a special compile-time generated class that configures the library to use. You should never need to do anythign with this yourself.
+
+=head2 Device::HIDAPI::DeviceInfo
+
+Objects of this type are returned by the device enumeration method. It provides the following read-only attributes about each device:
+
+=defn path
+This is the OS-specific path for referring to the device.
+
+=defn vendor-id
+This is the integer vendor ID for the device.
+
+=defn product-id
+This is the integer product ID for the device.
+
+=defn serial-number
+This is the string serial number of the device.
+
+=defn release-number
+This is integer release number of the device.
+
+=defn manufacturer-string
+This is the string naming the manufacturer of the device.
+
+=defn product-string
+This is the string naming the product.
+
+=defn usage-page
+This is an integer usage page descriptor.
+
+=defn usage
+This is an integer usage descriptor.
+
+=defn interface-number
+This is the integer interface number.
+
+=head1 METHODS
+
+=head2 method enumerate
+
+    method enumerate(Device::HIDAPI:_:
+        UInt $vendor-id = 0,
+        UInt $product-id = 0,
+        --> Seq
+    )
+
+This method is used to enumerate the devices known to the system.
+
+    # list all the VIDs and PIDs
+    for Device::HIDAPI.enumerate -> $dev {
+        say "$dev.vendor-id():$dev.product-id() "
+          ~ "- $dev.manufacturer-string(): "
+          ~ "$dev.product-string()";
+    }
+
+The C<$vendor-id> and C<$product-id> can be set to specific numbers to list only devices matching those IDs. A value of 0 (the default) matches all IDs (i.e., list all).
+
+=head2 method new
+
+    multi method new(Device::HIDAPI:U:
+        UInt :$vendor-id!,
+        UInt :$product-id!,
+        Str :$serial-number,
+        --> Device::HIDAPI:D
+    )
+
+    multi method new(Device::HIDAPI:U:
+        Str:D :$path!
+        --> Device::HIDAPI:D
+    )
+
+These constructors return an instance of C<Device::HIDAPI>, which can be used to read from and write to the device. You may construct the object either using the C<$vendor-id> and the C<$product-id> or the C<$path> to the device. It is possible to have multiple of the same device connected, in which case you may also want to provide the C<$serial-number> when using the VID and PID.
+
+=head2 method write
+
+    method write(Device::HIDAPI:D: blob8 $data --> UInt:D)
+
+Writes the given blob to the device. Returns the number of bytes actually written.
+
+=head2 method read-timeout
+
+    method read-timeout(Device::HIDAPI:D: UInt:D $millis --> blob8:D)
+
+Reads data from the device or fails if the device does not return anything within C<$millis> milliseconds.
+
+Throws an exception if there's an error during the read.
+
+
+
+=head1 INSTALLATION
+
+To install this library, you will first need to install the C library. See the latest instructions at the hidapi project page here:
+
+=item L<https://github.com/libusb/hidapi>
+
+If you install a pre-packaged binary, make sure it's a development package that includes all the headers as well as the libraries (on Debian-type Linuxes, this means the package iwth the  C<-dev> suffix).
+
+Once installed, this can be installed like any other Perl 6 module:
+
+    zef install Device::HIDAPI
+
+That should work on Linux, Mac, and Windows.
+
+=end pod
