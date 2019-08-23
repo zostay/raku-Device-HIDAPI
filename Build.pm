@@ -1,6 +1,6 @@
 use v6;
 
-constant LIBS = <hidapi hidapi-libusb hidapi-hidraw>;
+constant LIBS = <hidapi hidapi-hidraw hidapi-libusb>;
 
 class Build {
     method try-libraries($workdir --> Seq) {
