@@ -852,6 +852,14 @@ Given an index, returns the indexed string from the device.
 
 Throws an error if there's a problem getting the data from the device.
 
+=head1 MORE INFORMATION
+
+If you want more detail regarding how each of the methods in this interface work. You should see the documentation of the wrapped library here:
+
+=item L<https://github.com/libusb/hidapi>
+
+The methods of this interface all map into functions in the original C library with one-to-one correspondance. It should be clear which methods call which function.
+
 =head1 INSTALLATION
 
 To install this library, you will first need to install the C library. See the latest instructions at the hidapi project page here:
