@@ -538,7 +538,7 @@ sub hid_get_manufacturer_string(Device::HIDAPI $dev, CArray[int32] $string, size
 
 my constant STRING_SIZE = 256;
 
-method get-manufacturer(::?CLASS:D: --> Str:D) {
+method get-manufacturer-string(::?CLASS:D: --> Str:D) {
     my CArray[int32] $chrs .= new;
     $chrs[ STRING_SIZE - 1 ] = 0;
 
@@ -614,7 +614,7 @@ method get-serial-number-string(::?CLASS:D: --> Str:D) {
 #		int HID_API_EXPORT_CALL hid_get_indexed_string(hid_device *dev, int string_index, wchar_t *string, size_t maxlen);
 sub hid_get_indexed_string(Device::HIDAPI $dev, int32 $string-index, CArray[int32] $string, size_t $maxlen --> int32) is native(HIDAPI) { * }
 
-method get-indexed-string(::CLASS:D: Int:D $string-index --> Str:D) {
+method get-indexed-string(::CLASS:D: Int:D $string-index --> Str) {
     my CArray[int32] $chrs .= new;
     $chrs[ STRING_SIZE - 1 ] = 0;
 
@@ -623,7 +623,7 @@ method get-indexed-string(::CLASS:D: Int:D $string-index --> Str:D) {
         self!error('hid_get_indexed_string');
     }
 
-    chrs($chrs.list[^$actual-size]);
+    $actual-size == 0 ?? Nil !! chrs($chrs.list[^$actual-size]);
 }
 
 #		/** @brief Get a string describing the last error which occurred.
@@ -772,11 +772,85 @@ Writes the given blob to the device. Returns the number of bytes actually writte
 
     method read-timeout(Device::HIDAPI:D: UInt:D $millis --> blob8:D)
 
-Reads data from the device or fails if the device does not return anything within C<$millis> milliseconds.
+Reads data from the device or fails with an exception. If the device does not return anything within C<$millis> milliseconds it returns an empty C<Blob>.
 
 Throws an exception if there's an error during the read.
 
+=head2 method read
 
+    method read(Device::HIDAPI:D: --> blob8:D)
+
+Reads data from the device. Unless the object has been set to use non-blocking operations, this operation will block until data becomes available. If non-blocking has been set, then this will return data if any is waiting or return an empty C<Blob> immediately if none is currently ready to read.
+
+Throws an exception if there's an error during the read.
+
+=head2 method set-nonblocking
+
+    method set-nonblocking(Device::HIDAPI:D: Bool:D $nonblock)
+
+Sets the device as non-blocking or not based on the value of C<$nonblock>. If the object is set to non-blocking, then calls to L</method read> will not block.
+
+May throw an exception if an error occurs making a change to the device object.
+
+=head2 method send-feature-report
+
+    method send-feature-report(Device::HIDAPI:D: blob8 $data --> UInt:D)
+
+Sends a feature rreport to the device. Returns the number of bytes written.
+
+Throws an exception if there is an error performing the write.
+
+=head2 method get-feature-report
+
+    method get-feature-report(Device::HIDAPI:D: --> blob8:D)
+
+Retrieve a feature report from the device.
+
+Throws an exception if there is an error performing the read.
+
+=head2 method close
+
+    method close(Device::HIDAPI:D:)
+
+Closes the device and frees up associated resources. You should call this manually after creating the object if you want to make sure resources are freed before the garbage collector gets around to freeing memory:
+
+    # You can make calling this automatic when the variable goes out of scope
+    # like this...
+    my Device::HIDAPI:D $dev is leave({ .close }) .= new($path);
+
+Throws an error if there is a problem releasing the object.
+
+=head2 method get-manufacturer-string
+
+    method get-manufacturer-string(Device::HIDAPI:D: --> Str:D)
+
+Retrieves the manufacturer string from the device.
+
+Throws an error if there's a problem getting the data from the device.
+
+=head2 method get-product-string
+
+    method get-product-string(Device::HIDAPI:D: --> Str:D)
+
+Retrieves the product string from the device.
+
+Throws an error if there's a problem getting the data from the device.
+
+=head2 method get-serial-number-string
+
+    method get-serial-number-string(Device::HIDAPI:D: --> Str:D)
+
+Retrieves the serial number string from the device.
+
+Throws an error if there's a problem getting the data from the device.
+
+=head2 method get-indexed-string
+
+    method get-indexed-string(Device::HIDAPI:D: Int:D: $index --> Str)
+
+Given an index, returns the indexed string from the device.
+
+Throws an error if there's a problem getting the data from the device.
 
 =head1 INSTALLATION
 
