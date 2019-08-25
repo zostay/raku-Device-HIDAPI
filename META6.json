@@ -1,8 +1,6 @@
 {
     "source-url": "git://github.com/zostay/p6-Device-HIDAPI.git",
-    "depends": [
-        "LibraryCheck"
-    ],
+    "depends": [ ],
     "test-depends": [
         "Test",
         "Test::META"
@@ -18,7 +16,10 @@
         "source": "git://github.com/zostay/p6-Device-HIDAPI.git"
     },
     "provides": {
-        "Device::HIDAPI": "lib/Device/HIDAPI.pm6"
+        "Device::HIDAPI": "lib/Device/HIDAPI.pm6",
+        "Device::HIDAPI::Config": "lib/Device/HIDAPI/Config.pm6",
+        "Device::HIDAPI::DeviceInfo": "lib/Device/HIDAPI.pm6",
+        "X::Device::HIDAPI": "lib/Device/HIDAPI.pm6"
     },
     "resources": [ ],
     "authors": [
