@@ -1,30 +1,38 @@
 {
-    "source-url": "git://github.com/zostay/p6-Device-HIDAPI.git",
-    "depends": [ ],
-    "test-depends": [
-        "Test",
-        "Test::META"
-    ],
-    "auth": "github:zostay",
-    "build-depends": [ ],
-    "version": "0.0.0",
-    "meta-version": "0",
-    "license": "Artistic-2.0",
-    "description": "Low-level access to HID devices",
-    "perl": "6.c",
-    "support": {
-        "source": "git://github.com/zostay/p6-Device-HIDAPI.git"
-    },
-    "provides": {
-        "Device::HIDAPI": "lib/Device/HIDAPI.pm6",
-        "Device::HIDAPI::Config": "lib/Device/HIDAPI/Config.pm6",
-        "Device::HIDAPI::DeviceInfo": "lib/Device/HIDAPI.pm6",
-        "X::Device::HIDAPI": "lib/Device/HIDAPI.pm6"
-    },
-    "resources": [ ],
-    "authors": [
-        "Sterling Hanenkamp <hanenkamp@cpan.org>"
-    ],
-    "tags": [ ],
-    "name": "Device::HIDAPI"
+  "version": "0.0.1",
+  "auth": "github:zostay",
+  "support": {
+    "source": "git://github.com/zostay/p6-Device-HIDAPI.git"
+  },
+  "tags": [
+    
+  ],
+  "source-url": "git://github.com/zostay/p6-Device-HIDAPI.git",
+  "description": "Low-level access to HID devices",
+  "test-depends": [
+    "Test",
+    "Test::META"
+  ],
+  "perl": "6.c",
+  "provides": {
+    "Device::HIDAPI::Config": "lib/Device/HIDAPI/Config.pm6",
+    "Device::HIDAPI::DeviceInfo": "lib/Device/HIDAPI.pm6",
+    "Device::HIDAPI": "lib/Device/HIDAPI.pm6",
+    "X::Device::HIDAPI": "lib/Device/HIDAPI.pm6"
+  },
+  "license": "Artistic-2.0",
+  "resources": [
+    
+  ],
+  "build-depends": [
+    
+  ],
+  "depends": [
+    
+  ],
+  "name": "Device::HIDAPI",
+  "authors": [
+    "Sterling Hanenkamp <hanenkamp@cpan.org>"
+  ],
+  "meta-version": "0"
 }
