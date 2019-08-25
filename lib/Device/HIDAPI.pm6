@@ -2,7 +2,7 @@ use v6;
 
 use NativeCall;
 
-unit class Device::HIDAPI is repr('CPointer');
+unit class Device::HIDAPI:ver<0.0.0>:auth<github:zostay> is repr('CPointer');
 
 my sub HIDAPI-Config(--> Str:D) {
     try require ::('Device::HIDAPI::Config');
